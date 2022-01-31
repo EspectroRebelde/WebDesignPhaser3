@@ -190,6 +190,9 @@ export default class DungeonScene extends Phaser.Scene {
     this.enemies = [];
     this.bulletManager = new BulletManager(this.enemies, this);
     this.player = new Player(this, x, y, this.bulletManager);
+    if(firstChest) {
+      this.player.hasKey = true;
+    }
 
 
     //place enemies

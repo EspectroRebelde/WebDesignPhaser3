@@ -1,0 +1,6 @@
+- Chest Visual Dispawn
+- Enemy Slimes (Add ghost if possible)
+- enemy per room
+- New tileset
+- PowerUps in chests (structure already coded)
+- Visual Indicators (Power-Ups & keys)
