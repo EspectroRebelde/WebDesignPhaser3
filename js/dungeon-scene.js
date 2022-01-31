@@ -157,10 +157,10 @@ export default class DungeonScene extends Phaser.Scene {
 
     //place enemies
     //this.enemy = new Enemy(this, x, y, this.player);
-      this.enemies = [];
+    this.enemies = [];
 
-      let enemy1 = new Enemy(this, x, y, this.player);
-      this.enemies.push(enemy1);
+    let enemy1 = new Enemy(this, x, y, this.player);
+    this.enemies.push(enemy1);
 
     this.tilemapVisibility = new TilemapVisibility(shadowLayer, this.enemies);
 
@@ -203,8 +203,18 @@ export default class DungeonScene extends Phaser.Scene {
   }
 
   updateEnemies() {
-      for (let i = 0; i < this.enemies.length; i++) {
-          this.enemies[i].update();
+    for (let i = 0; i < this.enemies.length; i++) {
+      this.enemies[i].update();
+    }
+  }
+
+  updatePowerUps() {
+    for (let i = 0; i < this.powerUps.length; i++) {
+      if (AABB(this.powerUps[i], this.player)) {
+        this.powerUps[i].causeEffect();
+        this.powerUps.splice(i, 1);
+        i--;
       }
+    }
   }
 }
