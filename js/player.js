@@ -109,14 +109,27 @@ let gamepadAPI = {
 window.addEventListener("gamepadconnected", gamepadAPI.connect);
 window.addEventListener("gamepaddisconnected", gamepadAPI.disconnect);
 
+let genericVars = {
+  executing : false
+}
+
 
 export default class Player {
-  constructor(scene, x, y) {
+  constructor(scene, x, y, bulletManager) {
     this.scene = scene;
     this.x = x;
     this.y = y;
     this.speed = 300;
     this.initialSpeed = 300;
+    this.durationSpeed = 2000
+    this.deltaSpeed = 0;
+    this.hasKey = false;
+
+    this.bulletManager = bulletManager;
+    this.initialCdShoot = 500;
+    this.cdShoot = 500;
+    this.durationShoot = 2000;
+    this.deltaShoot = 0;
 
     const anims = scene.anims;
     anims.create({
@@ -151,54 +164,144 @@ export default class Player {
     this.sprite.body.moves = false;
   }
 
-  update() {
+  update(delta) {
     const keys = this.keys;
     const sprite = this.sprite;
     const prevVelocity = sprite.body.velocity.clone();
     gamepadAPI.update();
+
+    //shoot delta
+    this.deltaShoot += delta;
+    
+    if (this.initialSpeed != this.speed) {
+        this.deltaSpeed += delta;
+        if (this.deltaSpeed >= this.durationSpeed) {
+            this.deltaSpeed = 0;
+            this.restoreSpeed();
+        }
+    }
+
+    if(this.initialCdShoot != this.cdShoot) {
+        this.deltaShoot += delta;
+        if(this.deltaShoot >= this.durationShoot) {
+          this.deltaShoot = 0;
+          this.restoreShootSpeed();
+        }
+    }
 
     // Stop any previous movement from the last frame
     sprite.body.setVelocity(0);
 
     // Horizontal movement
     if (keys.left.isDown || keys.a.isDown || gamepadAPI.axesStatus[0] < -0.5) {
-      sprite.body.setVelocityX(-this.speed);
       sprite.setFlipX(true);
+      if(!keys.e.isDown) {
+          sprite.body.setVelocityX(-this.speed);
+      } else {
+        if(this.deltaShoot >= this.cdShoot) {
+          this.deltaShoot = 0;
+          this.bulletManager.shootBullet(sprite.x, sprite.y, -1, 0);
+        }
+      }
+      
     } else if (keys.right.isDown || keys.d.isDown || gamepadAPI.axesStatus[0] > 0.5) {
-      sprite.body.setVelocityX(this.speed);
       sprite.setFlipX(false);
+      if(!keys.e.isDown) {
+          sprite.body.setVelocityX(this.speed);
+      } else {
+        if(this.deltaShoot >= this.cdShoot) {
+          this.deltaShoot = 0;
+          this.bulletManager.shootBullet(sprite.x, sprite.y, 1, 0);
+        }
+      }
     }
 
     // Vertical movement
     if (keys.up.isDown || keys.w.isDown || gamepadAPI.axesStatus[1] < -0.5) {
-      sprite.body.setVelocityY(-this.speed);
+      if(!keys.e.isDown) {
+          sprite.body.setVelocityY(-this.speed);
+      } else {
+        if(this.deltaShoot >= this.cdShoot) {
+          this.deltaShoot = 0;
+          this.bulletManager.shootBullet(sprite.x, sprite.y, 0, -1);
+        }
+      }
+
     } else if (keys.down.isDown || keys.s.isDown || gamepadAPI.axesStatus[1] > 0.5) {
-      sprite.body.setVelocityY(this.speed);
+      if(!keys.e.isDown) {
+          sprite.body.setVelocityY(this.speed);
+      } else {
+        if(this.deltaShoot >= this.cdShoot) {
+          this.deltaShoot = 0;
+          this.bulletManager.shootBullet(sprite.x, sprite.y, 0, 1);
+        }
+      }
     }
+    
 
     // Normalize and scale the velocity so that sprite can't move faster along a diagonal
     sprite.body.velocity.normalize().scale(this.speed);
 
-    // Update the animation last and give left/right animations precedence over up/down animations
-    if (keys.left.isDown || keys.right.isDown || keys.down.isDown || keys.s.isDown || keys.a.isDown || keys.d.isDown || gamepadAPI.axesStatus[0] > 0.5 || gamepadAPI.axesStatus[0] < -0.5 || gamepadAPI.axesStatus[1] > 0.5) {
-      sprite.anims.play("king-walk", true);
-    } else if (keys.up.isDown || keys.w.isDown || gamepadAPI.axesStatus[1] < -0.5) {
-      sprite.anims.play("king-walk-back", true);
-    } else {
-      sprite.anims.stop();
+    // Update tkeymation last and give left/right animations precedence over up/down animations
+    if (!this.keys.e.isDown){
+      if (keys.left.isDown || keys.right.isDown || keys.down.isDown || keys.s.isDown || keys.a.isDown || keys.d.isDown || gamepadAPI.axesStatus[0] > 0.5 || gamepadAPI.axesStatus[0] < -0.5 || gamepadAPI.axesStatus[1] > 0.5) {
+        sprite.anims.play("king-walk", true);
+      } else if (keys.up.isDown || keys.w.isDown || gamepadAPI.axesStatus[1] < -0.5) {
+        sprite.anims.play("king-walk-back", true);
+      } else {
+        sprite.anims.stop();
 
-      // If we were moving, pick and idle frame to use
-      if (prevVelocity.y < 0) sprite.setTexture("characters", 42);
+        // If we were moving, pick and idle frame to use
+        if (prevVelocity.y < 0) sprite.setTexture("characters", 42);
+        else sprite.setTexture("characters", 23);
+      }
+    }
+    else {
+      if (keys.up.isDown || keys.w.isDown || gamepadAPI.axesStatus[1] < -0.5) sprite.setTexture("characters", 42); 
       else sprite.setTexture("characters", 23);
+    }
+
+    //Pick-Ups
+    if (keys.space.isDown && !genericVars.executing) {
+      genericVars.executing = true;
+      let playerTileX = this.scene.groundLayer.worldToTileX(this.sprite.x);
+      let playerTileY = this.scene.groundLayer.worldToTileY(this.sprite.y);
+      let room = this.scene.dungeon.getRoomAt(playerTileX, playerTileY);
+      if (room.chest){
+        if(room.chest.chest) {
+          console.log("Chest found")
+          if (room.chest.doorKey) {
+            console.log("You found the key!")
+            this.hasKey = true;
+          }
+          room.chest = {
+            chest : false,
+            doorKey : false
+          }
+        }
+      }
+    }
+    else if (!keys.space.isDown){
+      genericVars.executing = false;
     }
   }
 
   getBonusSpeed(speed) {
       this.speed += speed;
+      this.deltaSpeed = 0;
+  }
+
+  getBonusShoot(time) {
+      this.cdShoot -= time;
+      this.deltaShoot = 0;
   }
 
   restoreSpeed() {
       this.speed = this.initialSpeed;
+  }
+
+  restoreShootSpeed() {
+    this.cdShoot = this.initialCdShoot;
   }
 
   destroy() {

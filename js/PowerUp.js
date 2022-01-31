@@ -1,11 +1,8 @@
-class PowerUp {
-    constructor(x, y, type, change) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+export default class PowerUp {
+    constructor(x, y, player, type, change) {
         this.type = type;
         this.change = change;
+        this.player = player;
 
 
         this.sprite = scene.physics.add.sprite(x, y, "characters", 0).setSize(22, 33).setOffset(23, 27);
@@ -15,6 +12,10 @@ class PowerUp {
     causeEffect() {
         switch (this.type) {
             case 1: //extra speed
+                this.player.getBonusSpeed(change);
+                break;
+            case 2: //shoot cd
+                this.player.getBonusShoot(change);
                 break;
         }
     }

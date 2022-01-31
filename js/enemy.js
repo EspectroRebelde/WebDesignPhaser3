@@ -4,11 +4,12 @@
 import Vector2D from "./utils.js";
 
 export default class Enemy {
-  constructor(scene, x, y, player) {
+  constructor(scene, x, y, player, type) {
     this.scene = scene;
     this.x = x;
     this.y = y;
     this.player = player;
+    this.type = type;
 
     const anims = scene.anims;
     anims.create({
@@ -96,6 +97,25 @@ export default class Enemy {
   get _sprite() {return this.sprite;}
 
   destroy() {
+    switch(this.type) {
+        case 1:
+          break;
+        case 2:
+        this.generateEnemies();
+          break;
+    }
+
     this.sprite.destroy();
+    
+  }
+
+  //used as a sort of slime 
+  generateEnemies() {
+      let x1 = this.sprite.x - this.sprite.width;
+      let x2 = this.sprite.x + this.sprite.width;
+
+      this.scene.generateEnemy(x1, this.sprite.y, 1);
+      this.scene.generateEnemy(x2, this.sprite.y, 1);
+
   }
 }
