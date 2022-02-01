@@ -13,9 +13,8 @@ export default class TilemapVisibility {
     // We only need to update the tiles if the active room has changed
     if (room !== this.activeRoom) {
       this.setRoomAlpha(room, 0); // Make the new room visible
-      for(let i = 0; i < this.enemies.lenght; i++) {
-        this.enemies[i].sprite.alpha = 0;
-      }
+      this.setEnemiesAlpha(this.enemies, 0); // Dim the old room
+
       if (this.activeRoom){
         this.setRoomAlpha(this.activeRoom, 0.5); // Dim the old room
       }
@@ -33,5 +32,11 @@ export default class TilemapVisibility {
       room.width,
       room.height
     );
+  }
+
+  setEnemiesAlpha(enemies, alpha) {
+    for (let i = 0; i < enemies.length; i++) {
+      enemies[i].sprite.alpha = alpha;
+    }
   }
 }

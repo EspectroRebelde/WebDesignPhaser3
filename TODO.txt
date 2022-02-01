@@ -1,7 +1,13 @@
-False - Chest Visual Dispawn
-False - Chest proximity check
-False - Enemy Slimes (Add ghost if possible)
-False - Enemy per room
-False - New tileset
-False - PowerUps in chests (structure already coded)
-False - Visual Indicators (Power-Ups & keys)
+31/01/2022 & 01/02/2022
+
+DONE - Chest Visual Dispawn
+DONE - Chest proximity check
+DONE - Enemy Slimes (Add ghost if possible)
+DONE - Enemy Alpha
+DONE - Ghost Enemies
+DONE - Enemy per room
+TODO - New tileset
+DONE - PowerUps in chests (structure already coded)
+DONE - Visual Indicators (Power-Ups)
+DONE - Visual Indicators (Keys)
+

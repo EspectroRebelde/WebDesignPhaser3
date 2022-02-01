@@ -123,7 +123,7 @@ export default class Player {
     this.y = y;
     this.speed = 300;
     this.initialSpeed = 300;
-    this.durationSpeed = 2000
+    this.durationSpeed = 10000;
     this.deltaSpeed = 0;
     this.hasKey = false;
 
@@ -132,6 +132,8 @@ export default class Player {
     this.cdShoot = 500;
     this.durationShoot = 2000;
     this.deltaShoot = 0;
+
+    this.health = 10;
 
     const anims = scene.anims;
     anims.create({
@@ -177,10 +179,15 @@ export default class Player {
     const prevVelocity = sprite.body.velocity.clone();
     gamepadAPI.update();
 
+    if (this.health <= 0) {
+      this.updateText("Dead");
+      this.freeze();
+    }
+
     //shoot delta
     this.deltaShoot += delta;
     
-    if (this.initialSpeed != this.speed) {
+    if (this.initialSpeed !== this.speed) {
         this.deltaSpeed += delta;
         if (this.deltaSpeed >= this.durationSpeed) {
             this.deltaSpeed = 0;
@@ -188,7 +195,7 @@ export default class Player {
         }
     }
 
-    if(this.initialCdShoot != this.cdShoot) {
+    if(this.initialCdShoot !== this.cdShoot) {
         this.deltaShoot += delta;
         if(this.deltaShoot >= this.durationShoot) {
           this.deltaShoot = 0;
@@ -275,18 +282,16 @@ export default class Player {
       let playerTileY = this.scene.groundLayer.worldToTileY(this.sprite.y);
       let room = this.scene.dungeon.getRoomAt(playerTileX, playerTileY);
       if (room.chest){
-        if (this.isPointInGO(room.centerX, room.centerY, this)) {}
-        if(room.chest.chest) {
-          console.log("Chest found")
-          if (room.chest.doorKey) {
-            console.log("You found the key!")
-            this.hasKey = true;
+        if (this.isPointInRadius(room.centerX, room.centerY, playerTileX, playerTileY, 1)) {
+          if (room.chest.chest) {
+            console.log("Chest found")
+            this.openChest(room.chest);
+            room.chest = {
+              chest: false,
+              doorKey: false
+            }
+            this.updateChest(room);
           }
-          room.chest = {
-            chest : false,
-            doorKey : false
-          }
-          this.updateChest(room);
         }
       }
     }
@@ -295,8 +300,27 @@ export default class Player {
     }
   }
 
-  isPointInGO(x,y,go) {
-    return !( (x < go.x) || (x > go.x + go.width) || (y < go.y) || (y > go.y + go.height));
+  openChest(chest) {
+    if (chest.doorKey) {
+      console.log("Door key found")
+      this.hasKey = true;
+      this.updateText("Key");
+    }
+    else if (chest.speedBoost) {
+      this.getBonusSpeed(this.speed*0.2);
+      this.updateText("Speed");
+    }
+    else if (chest.shootBonus) {
+      this.getBonusShoot(this.cdShoot*0.2);
+      this.updateText("Shoot");
+    }
+  }
+
+  isPointInRadius(x1, y1, x2, y2, radius) {
+    let x = x2 - x1;
+    let y = y2 - y1;
+    let distance = Math.sqrt(x * x + y * y);
+    return distance <= radius;
   }
 
   getBonusSpeed(speed) {
@@ -309,6 +333,80 @@ export default class Player {
       this.deltaShoot = 0;
   }
 
+  updateText(newType){
+    if (newType !== "Dead") {
+      if (this.hasKey) {
+        if (newType === "Speed") {
+          this.scene.add
+              .text(16, 16, `Find the stairs.\nCurrent level: ${this.scene.level}\nIncreased movement speed!`, {
+                font: "18px monospace",
+                fill: "#000000",
+                padding: {x: 20, y: 10},
+                backgroundColor: "#ffffff",
+              })
+              .setScrollFactor(0);
+        } else if (newType === "Shoot") {
+          this.scene.add
+              .text(16, 16, `Find the stairs.\nCurrent level: ${this.scene.level}\nIncreased reload speed!`, {
+                font: "18px monospace",
+                fill: "#000000",
+                padding: {x: 20, y: 10},
+                backgroundColor: "#ffffff",
+              })
+              .setScrollFactor(0);
+        } else {
+          this.scene.add
+              .text(16, 16, `Find the stairs.\nCurrent level: ${this.scene.level}`, {
+                font: "18px monospace",
+                fill: "#000000",
+                padding: {x: 20, y: 10},
+                backgroundColor: "#ffffff",
+              })
+              .setScrollFactor(0);
+        }
+      } else {
+        if (newType === "Speed") {
+          this.scene.add
+              .text(16, 16, `Find the key.\nCurrent level: ${this.scene.level}\nIncreased movement speed!`, {
+                font: "18px monospace",
+                fill: "#000000",
+                padding: {x: 20, y: 10},
+                backgroundColor: "#ffffff",
+              })
+              .setScrollFactor(0);
+        } else if (newType === "Shoot") {
+          this.scene.add
+              .text(16, 16, `Find the key.\nCurrent level: ${this.scene.level}\nIncreased reload speed!`, {
+                font: "18px monospace",
+                fill: "#000000",
+                padding: {x: 20, y: 10},
+                backgroundColor: "#ffffff",
+              })
+              .setScrollFactor(0);
+        } else {
+          this.scene.add
+              .text(16, 16, `Find the key.\nCurrent level: ${this.scene.level}`, {
+                font: "18px monospace",
+                fill: "#000000",
+                padding: {x: 20, y: 10},
+                backgroundColor: "#ffffff",
+              })
+              .setScrollFactor(0);
+        }
+      }
+    }
+    else {
+      this.scene.add
+          .text(16, 16, `You died at level: ${this.scene.level}\nReload to try again.`, {
+            font: "18px monospace",
+            fill: "#000000",
+            padding: {x: 20, y: 10},
+            backgroundColor: "#ffffff",
+          })
+          .setScrollFactor(0);
+    }
+  }
+
   restoreSpeed() {
       this.speed = this.initialSpeed;
   }
@@ -318,7 +416,7 @@ export default class Player {
   }
 
   updateChest(room) {
-    this.scene.stuffLayer.putTilesAt(TILES.FLOOR, room.centerX, room.centerY);
+    this.scene.stuffLayer.putTilesAt(TILES.POT, room.centerX, room.centerY);
   }
 
   destroy() {

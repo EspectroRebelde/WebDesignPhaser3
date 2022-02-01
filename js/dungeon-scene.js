@@ -26,6 +26,17 @@ export default class DungeonScene extends Phaser.Scene {
         spacing: 2,
       }
     );
+    this.load.image("tiles", "./assets/tilesets/ghost.png");
+    this.load.spritesheet(
+        "ghost",
+        "./assets/spritesheets/ghost.png",
+        {
+          frameWidth: 48,
+          frameHeight: 48,
+          margin: 1,
+          spacing: 0,
+        }
+    );
 
     this.enemies = [];
   }
@@ -105,13 +116,17 @@ export default class DungeonScene extends Phaser.Scene {
     const rooms = this.dungeon.rooms.slice();
     const startRoom = rooms.shift();
     startRoom.chest = {
-        chest : false,
-        doorKey : false
-      }
+      chest : false,
+      doorKey : false,
+      speedBoost : false,
+      shootBonus : false
+    }
     const endRoom = Phaser.Utils.Array.RemoveRandomElement(rooms);
     endRoom.chest = {
         chest : false,
-        doorKey : false
+        doorKey : false,
+        speedBoost : false,
+        shootBonus : false
       }
     const otherRooms = Phaser.Utils.Array.Shuffle(rooms).slice(0, rooms.length * 0.9);
 
@@ -129,29 +144,40 @@ export default class DungeonScene extends Phaser.Scene {
           firstChest = false;
           room.chest = {
             chest : true,
-            doorKey : true
+            doorKey : true,
+            speedBoost : false,
+            shootBonus : false
           }
         }
         else{
+          let rand2 = Math.random();
           room.chest = {
             chest : true,
-            doorKey : false
+            doorKey : false,
+            speedBoost : rand2 < 0.7,
+            shootBonus : rand2 >= 0.7
           }
         }
-      } else if (rand <= 0.5) {
+      }
+      else if (rand <= 0.5) {
         // 50% chance of a pot anywhere in the room... except don't block a door!
         const x = Phaser.Math.Between(room.left + 2, room.right - 2);
         const y = Phaser.Math.Between(room.top + 2, room.bottom - 2);
         this.stuffLayer.weightedRandomize(x, y, 1, 1, TILES.POT);
         room.chest = {
           chest : false,
-          doorKey : false
+          doorKey : false,
+          speedBoost : false,
+          shootBonus : false
         }
-      } else {
+      }
+      else {
         // 25% of either 2 or 4 towers, depending on the room size
         room.chest = {
           chest : false,
-          doorKey : false
+          doorKey : false,
+          speedBoost : false,
+          shootBonus : false
         }
         if (room.height >= 9) {
           this.stuffLayer.putTilesAt(TILES.TOWER, room.centerX - 1, room.centerY + 1);
@@ -165,8 +191,10 @@ export default class DungeonScene extends Phaser.Scene {
       }
 
       let number = Phaser.Math.Between(1,2);
-      for (let k = 0; k < number; k++) {
+      if (rand > 0.25){
+        for (let k = 0; k < number; k++) {
           this.generateEnemies(room, map);
+        }
       }
     });
 
@@ -218,14 +246,26 @@ export default class DungeonScene extends Phaser.Scene {
     camera.startFollow(this.player.sprite);
 
     // Help text that has a "fixed" position on the screen
-    this.add
-      .text(16, 16, `Find the stairs. Go deeper.\nCurrent level: ${this.level}`, {
-        font: "18px monospace",
-        fill: "#000000",
-        padding: { x: 20, y: 10 },
-        backgroundColor: "#ffffff",
-      })
-      .setScrollFactor(0);
+    if (firstChest) {
+      this.scene.add
+          .text(16, 16, `Find the stairs.\nCurrent level: ${this.scene.level}`, {
+            font: "18px monospace",
+            fill: "#000000",
+            padding: { x: 20, y: 10 },
+            backgroundColor: "#ffffff",
+          })
+          .setScrollFactor(0);
+    }
+    else{
+      this.add
+          .text(16, 16, `Find the key.\nCurrent level: ${this.level}`, {
+            font: "18px monospace",
+            fill: "#000000",
+            padding: { x: 20, y: 10 },
+            backgroundColor: "#ffffff",
+          })
+          .setScrollFactor(0);
+    }
 
       this.setUpEnemies();
   }
@@ -282,10 +322,14 @@ export default class DungeonScene extends Phaser.Scene {
   setUpEnemies() {
     for (let i = 0; i < this.enemies.length; i++) {
       this.enemies[i].player = this.player;
-      this.enemies[i].speed = this.player.speed*0.9;
+      this.enemies[i].speed = this.player.initialSpeed*0.6;
     }
   }
 
+  /**
+   * @description Was used to generate powerups isntead of grabbing them from chests
+   * @deprecated
+   */
   updatePowerUps() {
     for (let i = 0; i < this.powerUps.length; i++) {
       if (AABB(this.powerUps[i], this.player)) {

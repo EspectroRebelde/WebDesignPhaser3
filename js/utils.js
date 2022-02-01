@@ -40,3 +40,8 @@ export function AABB(object1, object2) {
 
     return false;
 }
+
+function distanceBetweenTwoPoints(x1,y1,x2,y2, maxDistance) {
+
+
+}

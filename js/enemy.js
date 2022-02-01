@@ -13,25 +13,46 @@ export default class Enemy {
     this.updateRatio = 100;
     this.updateTimer = 0;
     this.speed = 250;
+    this.spriteName = type === 1 ? "characters" : "ghost";
 
     const anims = scene.anims;
     anims.create({
-      key: "naked-walk",
+      key: "characters-walk",
       frames: anims.generateFrameNumbers("characters", { start: 0, end: 3 }),
       frameRate: 8,
       repeat: -1,
     });
     anims.create({
-      key: "naked-walk-back",
+      key: "characters-walk-back",
       frames: anims.generateFrameNumbers("characters", { start: 19, end: 22 }),
       frameRate: 8,
       repeat: -1,
     });
+    anims.create({
+      key: "ghost-walk",
+      frames: anims.generateFrameNumbers("ghost", { start: 45, end: 47 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+    anims.create({
+      key: "ghost-walk-down",
+      frames: anims.generateFrameNumbers("ghost", { start: 0, end: 2 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+    anims.create({
+      key: "ghost-walk-back",
+      frames: anims.generateFrameNumbers("ghost", { start: 67, end: 69 }),
+      frameRate: 4,
+      repeat: -1,
+    });
 
 
-    this.sprite = scene.physics.add.sprite(x, y, "characters", 0).setSize(22, 33).setOffset(23, 27);
+    this.sprite = scene.physics.add.sprite(x, y, this.spriteName, 0).setSize(22, 33).setOffset(23, 27);
 
-    this.sprite.anims.play("naked-walk-back");
+    this.sprite.anims.play(this.spriteName + "-walk-back");
+
+    this.sprite.alpha = 0;
 
   }
 
@@ -87,24 +108,39 @@ export default class Enemy {
 
         // Update the animation last and give left/right animations precedence over up/down animations
         if (directionX !== 0 && directionY > 0) {
-          sprite.anims.play("naked-walk", true);
+          if (directionX < 0) {
+            sprite.setFlipX(true);
+          }
+          else if (directionX > 0) {
+            sprite.setFlipX(false);
+          }
+          sprite.anims.play(this.spriteName+"-walk", true);
         } else if (directionY < 0) {
-          sprite.anims.play("naked-walk-back", true);
+          sprite.anims.play(this.spriteName+"-walk-back", true);
+        } else if (directionY > 0 && this.type === 1) {
+          sprite.anims.play(this.spriteName+"-walk-down", true);
         } else {
           sprite.anims.stop();
 
           // If we were moving, pick and idle frame to use
           if (prevVelocity.y < 0) {
-            sprite.setTexture("characters", 19);
+            sprite.setTexture(this.spriteName, 67);
           } else {
-            sprite.setTexture("characters", 0);
+            sprite.setTexture(this.spriteName, 0);
           }
         }
+
+        //If we collide with the player
+        if (Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, this.player.sprite.x, this.player.sprite.y) < this.sprite.width) {
+          this.player.health -= 1/delta;
+        }
+
+
       }
       else {
         sprite.anims.stop();
-        sprite.setTexture("characters", 0);
-        sprite.alpha = 0.5;
+        sprite.setTexture(this.spriteName, 0);
+        sprite.alpha = 0;
       }
     }
   }
