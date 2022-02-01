@@ -188,6 +188,9 @@ export default class Player {
       this.updateText("Dead");
       this.freeze();
     }
+    else {
+      this.health += 0.5/delta;
+    }
 
     //shoot delta
     this.deltaShoot += delta;
