@@ -44,6 +44,10 @@ let gamepadAPI = {
       }
       //X
       if (gamepadAPI.controller.buttons[2].pressed) {
+        genericVars.gamepadRequested = true;
+      }
+      else {
+        genericVars.gamepadRequested = false;
       }
       //Y
       if (gamepadAPI.controller.buttons[3].pressed) {
@@ -112,7 +116,8 @@ window.addEventListener("gamepadconnected", gamepadAPI.connect);
 window.addEventListener("gamepaddisconnected", gamepadAPI.disconnect);
 
 let genericVars = {
-  executing : false
+  executing : false,
+  gamepadRequested : false,
 }
 
 
@@ -276,7 +281,7 @@ export default class Player {
     }
 
     //Pick-Ups
-    if (keys.space.isDown && !genericVars.executing) {
+    if ((keys.space.isDown || genericVars.gamepadRequested) && !genericVars.executing) {
       genericVars.executing = true;
       let playerTileX = this.scene.groundLayer.worldToTileX(this.sprite.x);
       let playerTileY = this.scene.groundLayer.worldToTileY(this.sprite.y);
@@ -295,7 +300,7 @@ export default class Player {
         }
       }
     }
-    else if (!keys.space.isDown){
+    else if (!keys.space.isDown && !genericVars.gamepadRequested) {
       genericVars.executing = false;
     }
   }
@@ -334,6 +339,7 @@ export default class Player {
   }
 
   updateText(newType){
+    /*this.scene.add.text.destroy();*/
     if (newType !== "Dead") {
       if (this.hasKey) {
         if (newType === "Speed") {

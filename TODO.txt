@@ -10,4 +10,5 @@ TODO - New tileset
 DONE - PowerUps in chests (structure already coded)
 DONE - Visual Indicators (Power-Ups)
 DONE - Visual Indicators (Keys)
+TODO - Destroy previous textbox before showing new one (destroy() not a function for text in phaser3 but in phaser2)
 
