@@ -1,3 +1,5 @@
+import TILES from "./tile-mapping.js";
+
 /**
  * Gamepad Input, NOT FULLY IMPLEMENTED
  * @type {{disconnect: gamepadAPI.disconnect, controller: {}, buttons: string[], turbo: boolean, update: gamepadAPI.update, axesStatus: *[], logic: gamepadAPI.logic, connect: gamepadAPI.connect}}
@@ -160,6 +162,11 @@ export default class Player {
       //if we press this key, we shoot in the direction where the player looks at??
   }
 
+  set _scene(newScene) {this.scene = newScene};
+  set _x(newX) {this.x = newX};
+  set _y(newY) {this.y = newY};
+  set _bulletManager(newBulletManager) {this.bulletManager = newBulletManager};
+
   freeze() {
     this.sprite.body.moves = false;
   }
@@ -268,6 +275,7 @@ export default class Player {
       let playerTileY = this.scene.groundLayer.worldToTileY(this.sprite.y);
       let room = this.scene.dungeon.getRoomAt(playerTileX, playerTileY);
       if (room.chest){
+        if (this.isPointInGO(room.centerX, room.centerY, this)) {}
         if(room.chest.chest) {
           console.log("Chest found")
           if (room.chest.doorKey) {
@@ -278,12 +286,17 @@ export default class Player {
             chest : false,
             doorKey : false
           }
+          this.updateChest(room);
         }
       }
     }
     else if (!keys.space.isDown){
       genericVars.executing = false;
     }
+  }
+
+  isPointInGO(x,y,go) {
+    return !( (x < go.x) || (x > go.x + go.width) || (y < go.y) || (y > go.y + go.height));
   }
 
   getBonusSpeed(speed) {
@@ -302,6 +315,10 @@ export default class Player {
 
   restoreShootSpeed() {
     this.cdShoot = this.initialCdShoot;
+  }
+
+  updateChest(room) {
+    this.scene.stuffLayer.putTilesAt(TILES.FLOOR, room.centerX, room.centerY);
   }
 
   destroy() {

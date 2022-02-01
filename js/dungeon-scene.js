@@ -26,6 +26,8 @@ export default class DungeonScene extends Phaser.Scene {
         spacing: 2,
       }
     );
+
+    this.enemies = [];
   }
 
   create() {
@@ -161,6 +163,11 @@ export default class DungeonScene extends Phaser.Scene {
           this.stuffLayer.putTilesAt(TILES.TOWER, room.centerX + 1, room.centerY - 1);
         }
       }
+
+      let number = Phaser.Math.Between(1,2);
+      for (let k = 0; k < number; k++) {
+          this.generateEnemies(room, map);
+      }
     });
 
     // Not exactly correct for the tileset since there are more possible floor tiles, but this will
@@ -187,7 +194,6 @@ export default class DungeonScene extends Phaser.Scene {
     const x = map.tileToWorldX(playerRoom.centerX);
     const y = map.tileToWorldY(playerRoom.centerY);
 
-    this.enemies = [];
     this.bulletManager = new BulletManager(this.enemies, this);
     this.player = new Player(this, x, y, this.bulletManager);
     if(firstChest) {
@@ -197,8 +203,6 @@ export default class DungeonScene extends Phaser.Scene {
 
     //place enemies
     //this.enemy = new Enemy(this, x, y, this.player);
-    let enemy1 = new Enemy(this, x, y, this.player, 1);
-    this.enemies.push(enemy1);
 
     this.tilemapVisibility = new TilemapVisibility(shadowLayer, this.enemies);
 
@@ -222,6 +226,8 @@ export default class DungeonScene extends Phaser.Scene {
         backgroundColor: "#ffffff",
       })
       .setScrollFactor(0);
+
+      this.setUpEnemies();
   }
 
   update(time, delta) {
@@ -232,7 +238,7 @@ export default class DungeonScene extends Phaser.Scene {
 
     this.bulletManager.update(delta);
 
-    this.updateEnemies();
+    this.updateEnemies(delta);
 
     // Find the player's room using another helper method from the dungeon that converts from
     // dungeon XY (in grid units) to the corresponding room object
@@ -243,14 +249,40 @@ export default class DungeonScene extends Phaser.Scene {
     this.tilemapVisibility.setActiveRoom(playerRoom, this.enemies);
   }
 
+  
   generateEnemy(x, y, type) {
     let enemy = new Enemy(this, x, y, this.player, type);
     this.enemies.push(enemy);
   }
+  
 
-  updateEnemies() {
+  generateEnemies(room, map) {
+      let x = -1;
+      let y = -1;
+
+      do  {
+              x = Phaser.Math.Between(room.left + 2, room.right - 2);
+              y = Phaser.Math.Between(room.top + 2, room.bottom - 2);
+      } while (x != (room.centerX - 1) && x != (room.centerX + 1) &&
+             y != (room.centerY - 1) && y != (room.centerY + 1) &&
+             x != (room.centerX - 2) && x != (room.centerX + 2) &&
+             y != (room.centerY - 2) && y != (room.centerY + 2));
+
+      var type = Phaser.Math.Between(1,2);
+
+      this.generateEnemy(map.tileToWorldX(x), map.tileToWorldY(y), type); 
+  }
+
+  updateEnemies(delta) {
     for (let i = 0; i < this.enemies.length; i++) {
-      this.enemies[i].update();
+      this.enemies[i].update(delta);
+    }
+  }
+
+  setUpEnemies() {
+    for (let i = 0; i < this.enemies.length; i++) {
+      this.enemies[i].player = this.player;
+      this.enemies[i].speed = this.player.speed*0.9;
     }
   }
 
@@ -264,3 +296,4 @@ export default class DungeonScene extends Phaser.Scene {
     }
   }
 }
+

@@ -1,6 +1,7 @@
-- Chest Visual Dispawn
-- Enemy Slimes (Add ghost if possible)
-- enemy per room
-- New tileset
-- PowerUps in chests (structure already coded)
-- Visual Indicators (Power-Ups & keys)
+False - Chest Visual Dispawn
+False - Chest proximity check
+False - Enemy Slimes (Add ghost if possible)
+False - Enemy per room
+False - New tileset
+False - PowerUps in chests (structure already coded)
+False - Visual Indicators (Power-Ups & keys)
